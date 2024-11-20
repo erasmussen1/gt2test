@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include <functional>
 #include <type_traits>
 #include <iostream>
@@ -62,56 +63,124 @@
     void name(bool&, std::string&, std::string&, int&); \
                                                         \
     namespace {                                         \
-    bool __##name = gt2::addTest(name, #name);          \
+    bool __##name = gt2::addTest1(name, #name);         \
     }                                                   \
                                                         \
     void name(bool& success, std::string& condition, std::string& file, int& line)
 
 
+#define TEST_F(suite, name)                                                             \
+    struct name : public suite {                                                        \
+        name() = default;                                                               \
+                                                                                        \
+        void body(bool& success, std::string& condition, std::string& file, int& line); \
+    };                                                                                  \
+                                                                                        \
+    namespace {                                                                         \
+    bool __##name = gt2::addTest2(new name, #name);                                     \
+    }                                                                                   \
+                                                                                        \
+    void name::body(bool& success, std::string& condition, std::string& file, int& line)
+
+
 namespace gt2 {
 
-struct Test {
+struct Test1 {
     std::string name;
     std::function<void(bool&, std::string&, std::string&, int&)> fn;
 };
 
-static std::vector<Test>& tests() {
-    static std::vector<Test> tests_;
-    return tests_;
+static auto tests1() -> std::vector<Test1>& {
+    static std::vector<Test1> tests1_;
+    return tests1_;
 }
 
-inline static bool addTest(std::function<void(bool&, std::string&, std::string&, int&)> fn,
-                           const std::string& name) {
-    tests().push_back({name, fn});
+inline static bool addTest1(std::function<void(bool&, std::string&, std::string&, int&)> fn,
+                            const std::string& name) {
+    tests1().push_back({name, fn});
     return true;
+}
+
+struct Test {
+    virtual ~Test() = default;
+
+    virtual void body(bool& success, std::string& condition, std::string& file, int& line) = 0;
+
+    virtual void setUp() {
+    }
+
+    virtual void tearDown() {
+    }
+};
+
+struct Test2 {
+    std::string name;
+    Test* p{nullptr};
+};
+
+static auto tests2() -> std::vector<Test2>& {
+    static std::vector<Test2> tests2_;
+    return tests2_;
+}
+
+inline static bool addTest2(Test* test_, const std::string& name) {
+    tests2().emplace_back(name, test_);
+    return true;
+}
+
+inline static void printPrefix(const std::string& testName) {
+    std::cout << RUN_PREFIX << testName << "\n";
+}
+
+inline static void printResults(const std::string& testName,
+                                const bool success,
+                                const std::string& condition,
+                                const std::string& filename,
+                                const int line,
+                                size_t& numberOfFailedTests) {
+    if (success) {
+        std::cout << GREEN "[      OK] " DEF << testName << "\n";
+    } else {
+        std::cout << RED "[  FAILED] " DEF << testName << "\n"
+                  << "           " RED "Assertion failed: " << condition << DEF "\n"
+                  << "           " RED << filename << ":" << line << DEF "\n";
+        ++numberOfFailedTests;
+    }
 }
 
 inline static size_t runAllTests() {
     size_t numberOfFailedTests = 0;
 
-    for (const auto& test : tests()) {
-        std::cout << RUN_PREFIX << test.name << "\n";
-        bool success = true;
-        std::string condition;
-        std::string filename;
-        int line = 0;
+    bool success = true;
+    std::string condition;
+    std::string filename;
+    int line = 0;
 
+    for (const auto& test : tests1()) {
+        success = true;
+
+        printPrefix(test.name);
         test.fn(success, condition, filename, line);
+        printResults(test.name, success, condition, filename, line, numberOfFailedTests);
+    }
 
-        if (success) {
-            std::cout << OK_PREFIX << test.name << "\n";
-        } else {
-            std::cout << FAILED_PREFIX << test.name << "\n"
-                      << "           " RED "Assertion failed: " << condition << DEF "\n"
-                      << "           " RED << filename << ":" << line << DEF "\n";
-            ++numberOfFailedTests;
-        }
+    for (const auto& test : tests2()) {
+        success=true;
+
+        printPrefix(test.name);
+        test.p->setUp();
+        test.p->body(success, condition, filename, line);
+        test.p->tearDown();
+        printResults(test.name, success, condition, filename, line, numberOfFailedTests);
+
+        delete test.p;
     }
 
     if (numberOfFailedTests == 0) {
         std::cout << GREEN "[ Summary] All tests succeeded!" DEF "\n";
     } else {
-        double percentage = 100.0 * numberOfFailedTests / gt2::tests().size();
+        double percentage =
+            100.0 * numberOfFailedTests / (gt2::tests1().size() + gt2::tests2().size());
 
         std::cout << RED "[ Summary] " << numberOfFailedTests          //
                   << " Tests failed " << percentage << "% " DEF "\n";  //
@@ -121,6 +190,8 @@ inline static size_t runAllTests() {
 }
 }  // namespace gt2
 
-#define TEST_MAIN() \
-    int main() { return gt2::runAllTests(); }
+#define TEST_MAIN()                \
+    int main() {                   \
+        return gt2::runAllTests(); \
+    }
 

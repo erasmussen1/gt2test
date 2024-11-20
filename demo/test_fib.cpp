@@ -114,5 +114,31 @@ TEST(TestSuite, TwoIntNE) {
     ASSERT_NE(x, y);
 }
 
+struct FibFixture : public gt2::Test {
+    void setUp() {
+        ;
+    }
+
+    void tearDown() {
+        ;
+    }
+
+    int n{15};
+};
+
+TEST_F(FibFixture, Fib0of15f) {
+    unsigned int res = fib0::fib(n);
+
+    EXPECT_TRUE(res == 610);
+}
+
+TEST_F(FibFixture, Fib0of5f) {
+    n = 5;
+
+    unsigned int res = fib0::fib(n);
+
+    EXPECT_TRUE(res == 5);
+}
+
 
 TEST_MAIN();

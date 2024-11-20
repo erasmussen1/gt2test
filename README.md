@@ -5,6 +5,8 @@ gt2test is a small c++ header only test framework
 
 This is a very basic test framework (without exceptions) and can be used on embedded devices
 
+The test macros are similar to the gtest. gt2test supports test fixtures
+
 If more advanced test features are needed used gtest or catch2
 
 
@@ -49,12 +51,17 @@ c++ version 13.0 or newer
 [  FAILED] TwoIntNE
            Assertion failed: x != y
            demo/test_fib.cpp:114
-[ Summary] 4 Tests failed 57.1429%
+[RUN     ] Fib0of15f
+[      OK] Fib0of15f
+[RUN     ] Fib0of5f
+[      OK] Fib0of5f
+[ Summary] 4 Tests failed 44.4444%
 
 ```
 
 ### Example of the demo code:
 ```
+
 TEST(TestSuite, Fib0of15) {
     unsigned int res = fib0::fib(15);
 
@@ -101,6 +108,31 @@ TEST(TestSuite, TwoIntNE) {
     ASSERT_NE(x, y);
 }
 
+struct FibFixture : public gt2::Test {
+    void setUp() {
+        ;
+    }
+
+    void tearDown() {
+        ;
+    }
+
+    int n{15};
+};
+
+TEST_F(FibFixture, Fib0of15f) {
+    unsigned int res = fib0::fib(n);
+
+    EXPECT_TRUE(res == 610);
+}
+
+TEST_F(FibFixture, Fib0of5f) {
+    n = 5;
+
+    unsigned int res = fib0::fib(n);
+
+    EXPECT_TRUE(res == 5);
+}
 
 TEST_MAIN();
 
