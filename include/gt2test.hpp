@@ -114,6 +114,7 @@ struct Test {
 };
 
 struct Test2 {
+    Test2(const std::string& name_, Test *p_) : name(name_), p(p_) {}
     std::string name;
     Test* p{nullptr};
 };
