@@ -47,7 +47,7 @@
 
 #define ASSERT_NEAR(a, b, e) ASSERT(std::fabs(a - b) < e);
 
-#define EXPECT_TRUE(cond) ASSERT(cond);
+#define EXPECT_TRUE(cond) ASSERT(cond)
 #define EXPECT_FALSE(cond) ASSERT(!(cond));
 
 #define EXPECT_NULL(value) ASSERT(value == nullptr);
@@ -63,24 +63,25 @@
     void name(bool&, std::string&, std::string&, int&); \
                                                         \
     namespace {                                         \
-    bool __##name = gt2::addTest1(name, #name);         \
+    bool name##flag = gt2::addTest1(name, #name);         \
     }                                                   \
                                                         \
     void name(bool& success, std::string& condition, std::string& file, int& line)
 
+#define uniqname(a) a##__LINE__
 
 #define TEST_F(suite, name)                                                             \
-    struct name : public suite {                                                        \
-        name() = default;                                                               \
+    struct uniqname(name) : public suite {                                              \
+        uniqname(name)() = default;                                                     \
                                                                                         \
         void body(bool& success, std::string& condition, std::string& file, int& line); \
     };                                                                                  \
                                                                                         \
     namespace {                                                                         \
-    bool __##name = gt2::addTest2(new name, #name);                                     \
+    bool name##__LINE__##flag = gt2::addTest2(new uniqname(name), #name);               \
     }                                                                                   \
                                                                                         \
-    void name::body(bool& success, std::string& condition, std::string& file, int& line)
+    void uniqname(name)::body(bool& success, std::string& condition, std::string& file, int& line)
 
 
 namespace gt2 {
@@ -106,15 +107,13 @@ struct Test {
 
     virtual void body(bool& success, std::string& condition, std::string& file, int& line) = 0;
 
-    virtual void setUp() {
-    }
+    virtual void setUp() {}
 
-    virtual void tearDown() {
-    }
+    virtual void tearDown() {}
 };
 
 struct Test2 {
-    Test2(const std::string& name_, Test *p_) : name(name_), p(p_) {}
+    Test2(const std::string& name_, Test* p_) : name(name_), p(p_) {}
     std::string name;
     Test* p{nullptr};
 };
@@ -166,7 +165,7 @@ inline static size_t runAllTests() {
     }
 
     for (const auto& test : tests2()) {
-        success=true;
+        success = true;
 
         printPrefix(test.name);
         test.p->setUp();
@@ -195,4 +194,3 @@ inline static size_t runAllTests() {
     int main() {                   \
         return gt2::runAllTests(); \
     }
-
