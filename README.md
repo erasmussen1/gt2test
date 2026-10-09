@@ -5,7 +5,7 @@ gt2test is a small c++ header only test framework
 
 This is a very basic test framework (without exceptions) and can be used on embedded devices
 
-The test macros are similar to the gtest. gt2test supports test fixtures
+The test macros are similar to the googletest. gt2test supports test fixtures
 
 If more advanced test features are needed used gtest or catch2
 
@@ -109,12 +109,12 @@ TEST(TestSuite, TwoIntNE) {
 }
 
 struct FibFixture : public gt2::Test {
-    void setUp() {
+    void SetUp() override {
         ;
     }
 
-    void tearDown() {
-        ;
+    void TearDown() override {
+        n = 0;
     }
 
     int n{15};
