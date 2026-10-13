@@ -1,17 +1,18 @@
 # gt2test
 
 ## Description:
-gt2test is a small c++ header only test framework
+gt2test is a small C++ header only test framework
 
-This is a very basic test framework (without exceptions) and can be used on embedded devices
+This is a very basic test framework (it does not use exceptions nor fork).
+It was aimed to be used on code for embedded devices.
 
-The test macros are similar to the googletest. gt2test supports test fixtures
+The macros are similar to googletest (including support for test fixtures)
 
-If more advanced test features are needed used gtest or catch2
+If more advanced test features are needed, please use gtest or catch2
 
 
 ### Project requires following
-c++ version 13.0 or newer
+c++ version 17.0 or newer
 
 ### How to build and run the demo project:
 
